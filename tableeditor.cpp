@@ -21,7 +21,8 @@ void TableEditor::initializeStudentsModel(QSqlTableModel *model){
     model->setHeaderData(0, Qt::Horizontal, QObject::tr("ID"));
     model->setHeaderData(1, Qt::Horizontal, QObject::tr("First Name"));
     model->setHeaderData(2, Qt::Horizontal, QObject::tr("Last Name"));
-    model->setHeaderData(3, Qt::Horizontal, QObject::tr("GPA"));
+    model->setHeaderData(3, Qt::Horizontal, QObject::tr("Name"));
+    model->setHeaderData(4, Qt::Horizontal, QObject::tr("GPA"));
 }
 void TableEditor::initializeCoursesModel(QSqlTableModel *model){
     model->setTable("Courses");
@@ -35,11 +36,11 @@ void TableEditor::initializeEvaluationModel(QSqlRelationalTableModel *model){
     model->setTable("Evaluation");
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);
 
-    model->setRelation(1, QSqlRelation("Students", "id", "first_name"));
+    model->setRelation(1, QSqlRelation("Students", "id", "name"));
     model->setRelation(2, QSqlRelation("Courses", "id", "name"));
 
     model->setHeaderData(0, Qt::Horizontal, QObject::tr("ID"));
-    model->setHeaderData(1, Qt::Horizontal, QObject::tr("Student"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("Name"));
     model->setHeaderData(2, Qt::Horizontal, QObject::tr("Course"));
     model->setHeaderData(3, Qt::Horizontal, QObject::tr("Grade"));
 
@@ -48,7 +49,7 @@ void TableEditor::initializeEvaluationModel(QSqlRelationalTableModel *model){
 QTableView *TableEditor::createClassicView(QSqlTableModel *model){
     QTableView *view{new QTableView};
     view->setModel(model);
-    // view->resizeColumnsToContents();
+    view->resizeColumnsToContents();
     // view->setWindowTitle(title);
 
     return view;
@@ -57,7 +58,7 @@ std::unique_ptr<QTableView> TableEditor::createRelationalView(QSqlTableModel *mo
     std::unique_ptr<QTableView> view{new QTableView};
     view->setModel(model);
     view->setItemDelegate(new QSqlRelationalDelegate(view.get()));
-    // view->resizeColumnsToContents();
+    view->resizeColumnsToContents();
     // view->setWindowTitle(title);
 
     return view;
@@ -77,6 +78,7 @@ TableEditor::TableEditor(const QString &tableName, QWidget *parent)
         bool relational = false;
         initializeStudentsModel(model);
         view = createClassicView(model);
+        view->hideColumn(3);
     } else if (tableName == "Courses"){
         bool relational = false;
         initializeCoursesModel(model);
@@ -189,10 +191,14 @@ void TableEditor::revert()
 void TableEditor::refresh()
 {
     if(relational) {
-        // model->setRelation(1, QSqlRelation("Students", "id", "first_name"));
-        // model->setRelation(2, QSqlRelation("Courses", "id", "name"));
-        // evaluationView->setItemDelegate(new QSqlRelationalDelegate(evaluationView.get()));
+        initializeEvaluationModel(model);
+        evaluationView->resizeColumnsToContents();
+        evaluationView->hideColumn(0);
+
+        return;
     }
+
+
     model->select();
 }
 

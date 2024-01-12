@@ -10,81 +10,38 @@
 #include <QtWidgets>
 
 #include "tableeditor.h"
+#include "editablesqlmodel.h"
 
-// void initializeStudentsModel(QSqlTableModel *model){
-//     model->setTable("Students");
-//     model->setEditStrategy(QSqlTableModel::OnManualSubmit);
-//     model->select();
+void initializeModel(QSqlQueryModel *model)
+{
+    model->setQuery("SELECT Students.ID, Students.first_name, Students.last_name, Courses.name, Evaluation.grade, Students.GPA FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID");
+    model->setHeaderData(0, Qt::Horizontal, QObject::tr("ID"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("First name"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("Last name"));
+    model->setHeaderData(3, Qt::Horizontal, QObject::tr("Course Name"));
+    model->setHeaderData(4, Qt::Horizontal, QObject::tr("Grade"));
+    model->setHeaderData(5, Qt::Horizontal, QObject::tr("GPA"));
+}
 
-//     model->setHeaderData(0, Qt::Horizontal, QObject::tr("ID"));
-//     model->setHeaderData(1, Qt::Horizontal, QObject::tr("First Name"));
-//     model->setHeaderData(2, Qt::Horizontal, QObject::tr("Last Name"));
-//     model->setHeaderData(3, Qt::Horizontal, QObject::tr("GPA"));
-// }
+QTableView* createView(QSqlQueryModel *model)
+{
+    QTableView *view = new QTableView;
 
-// void initializeCoursesModel(QSqlTableModel *model){
-//     model->setTable("Courses");
-//     model->setEditStrategy(QSqlTableModel::OnManualSubmit);
-//     model->select();
+    QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(model);
+    proxyModel->setSourceModel(model);
+    view->setSortingEnabled(true);
 
-//     model->setHeaderData(0, Qt::Horizontal, QObject::tr("ID"));
-//     model->setHeaderData(1, Qt::Horizontal, QObject::tr("Name"));
-// }
+    view->setModel(proxyModel);
 
-// void initializeEvaluationModel(QSqlRelationalTableModel *model){
-//     model->setTable("Evaluation");
-//     model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    // static int offset = 0;
 
-//     model->setRelation(0, QSqlRelation("Students", "id", "first_name"));
-//     model->setRelation(1, QSqlRelation("Courses", "id", "name"));
+    // view->setWindowTitle(title);
+    // view->move(100 + offset, 100 + offset);
+    // offset += 20;
+    // view->show();
 
-//     model->setHeaderData(0, Qt::Horizontal, QObject::tr("Student"));
-//     model->setHeaderData(1, Qt::Horizontal, QObject::tr("Course"));
-//     model->setHeaderData(2, Qt::Horizontal, QObject::tr("Grade"));
-
-//     model->select();
-// }
-
-// void createRelationalTables()
-// {
-//     QSqlQuery query;
-//     query.exec("create table employee(id int primary key, name varchar(20), city int, country int)");
-//     query.exec("insert into employee values(1, 'Espen', 5000, 47)");
-//     query.exec("insert into employee values(2, 'Harald', 80000, 49)");
-//     query.exec("insert into employee values(3, 'Sam', 100, 1)");
-
-//     query.exec("create table city(id int, name varchar(20))");
-//     query.exec("insert into city values(100, 'San Jose')");
-//     query.exec("insert into city values(5000, 'Oslo')");
-//     query.exec("insert into city values(80000, 'Munich')");
-
-//     query.exec("create table country(id int, name varchar(20))");
-//     query.exec("insert into country values(1, 'USA')");
-//     query.exec("insert into country values(47, 'Norway')");
-//     query.exec("insert into country values(49, 'Germany')");
-// }
-
-// std::unique_ptr<QTableView> createRelationalView(QSqlTableModel *model)
-// {
-//     std::unique_ptr<QTableView> view{new QTableView};
-//     view->setModel(model);
-//     view->setItemDelegate(new QSqlRelationalDelegate(view.get()));
-//     view->resizeColumnsToContents();
-//     // view->setWindowTitle(title);
-
-//     return view;
-// }
-
-// QTableView *createClassicView(QSqlTableModel *model)
-// {
-//     QTableView *view{new QTableView};
-//     view->setModel(model);
-//     view->resizeColumnsToContents();
-//     // view->setWindowTitle(title);
-
-//     return view;
-// }
-
+    return view;
+}
 
 int main(int argc, char *argv[])
 {
@@ -135,14 +92,42 @@ int main(int argc, char *argv[])
     TableEditor coursesEditor("Courses", coursesPage);
     TableEditor evaluationEditor("Evaluation", evaluationPage);
 
+    QVBoxLayout *overviewLayout = new QVBoxLayout();
+    QWidget *studentOverviewPage = new QWidget();
+
+    EditableSqlModel editableModel(studentOverviewPage);
+    initializeModel(&editableModel);
+    QTableView *studentOverview = new QTableView;
+    studentOverview = createView(&editableModel);
+
+    QWidget *filterHeader = new QWidget();
+    QHBoxLayout *filterHeaderLayout = new QHBoxLayout();
+    QLineEdit *filterInput = new QLineEdit;
+    QComboBox *columnSelect = new QComboBox;
+    QPushButton *filterButton = new QPushButton;
+
+    filterHeaderLayout->addWidget(filterInput);
+    filterHeaderLayout->addWidget(columnSelect);
+    filterHeaderLayout->addWidget(filterButton);
+    filterHeader->setLayout(filterHeaderLayout);
+
+    overviewLayout->addWidget(filterHeader);
+    overviewLayout->addWidget(studentOverview);
+    studentOverviewPage->setLayout(overviewLayout);
+
     tabWidget->addTab(studentsPage, "Students");
     tabWidget->addTab(coursesPage, "Courses");
     tabWidget->addTab(evaluationPage, "Evaluation");
+    tabWidget->addTab(studentOverviewPage, "Student Overview");
 
     mainLayout->addWidget(tabWidget);
     // mainLayout->addWidget(coursesView);
     // mainLayout->addWidget(evaluationView);
     w.setLayout(mainLayout);
+
+
+
+
 
     // QHBoxLayout *studentsPageLayout = new QHBoxLayout();
     // studentsPageLayout->addWidget(studentsView);
