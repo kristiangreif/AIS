@@ -11,6 +11,7 @@
 
 #include "tableeditor.h"
 #include "editablesqlmodel.h"
+#include "mysortfilterproxymodel.h"
 
 void initializeModel(QSqlQueryModel *model)
 {
@@ -23,11 +24,13 @@ void initializeModel(QSqlQueryModel *model)
     model->setHeaderData(5, Qt::Horizontal, QObject::tr("GPA"));
 }
 
+MySortFilterProxyModel *proxyModel;
+
 QTableView* createView(QSqlQueryModel *model)
 {
     QTableView *view = new QTableView;
 
-    QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(model);
+    proxyModel = new MySortFilterProxyModel(model);
     proxyModel->setSourceModel(model);
     view->setSortingEnabled(true);
 
@@ -42,6 +45,8 @@ QTableView* createView(QSqlQueryModel *model)
 
     return view;
 }
+
+
 
 int main(int argc, char *argv[])
 {
@@ -102,13 +107,39 @@ int main(int argc, char *argv[])
 
     QWidget *filterHeader = new QWidget();
     QHBoxLayout *filterHeaderLayout = new QHBoxLayout();
-    QLineEdit *filterInput = new QLineEdit;
-    QComboBox *columnSelect = new QComboBox;
-    QPushButton *filterButton = new QPushButton;
+    QLineEdit *filter1Input = new QLineEdit;
+    QLineEdit *filter2Input = new QLineEdit;
+    w.filter1ColumnSelect = new QComboBox;
+    w.filter2ColumnSelect = new QComboBox;
 
-    filterHeaderLayout->addWidget(filterInput);
-    filterHeaderLayout->addWidget(columnSelect);
-    filterHeaderLayout->addWidget(filterButton);
+    QLabel *filterLabel = new QLabel("Filter:");
+    filterLabel->setBuddy(filter1Input);
+    QLabel *filter1ColumnLabel = new QLabel("Category:");
+    filter1ColumnLabel->setBuddy(w.filter1ColumnSelect);
+    QLabel *filter2ColumnLabel = new QLabel("Category:");
+    filter2ColumnLabel->setBuddy(w.filter2ColumnSelect);
+
+    QObject::connect(filter1Input, &QLineEdit::textChanged, &w, &Window::filter1Slot);
+    QObject::connect(filter2Input, &QLineEdit::textChanged, &w, &Window::filter2Slot);
+    QObject::connect(&w, &Window::filter1Signal, proxyModel, &MySortFilterProxyModel::setFilter1);
+    QObject::connect(&w, &Window::filter2Signal, proxyModel, &MySortFilterProxyModel::setFilter2);
+
+    QStringList columnNames;
+    for (int i=0; i<editableModel.columnCount();i++){
+        columnNames << editableModel.headerData(i,Qt::Horizontal).value<QString>();
+    }
+    w.filter1ColumnSelect->addItems(columnNames);
+    w.filter2ColumnSelect->addItems(columnNames);
+
+    filterHeaderLayout->setContentsMargins(0, 0, 0, 0);
+    filterHeaderLayout->addWidget(filterLabel);
+    filterHeaderLayout->addWidget(filter1Input);
+    filterHeaderLayout->addWidget(filter1ColumnLabel);
+    filterHeaderLayout->addWidget(w.filter1ColumnSelect);
+
+    filterHeaderLayout->addWidget(filter2Input);
+    filterHeaderLayout->addWidget(filter2ColumnLabel);
+    filterHeaderLayout->addWidget(w.filter2ColumnSelect);
     filterHeader->setLayout(filterHeaderLayout);
 
     overviewLayout->addWidget(filterHeader);
