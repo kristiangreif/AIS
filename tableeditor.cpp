@@ -4,8 +4,6 @@
 // #include <stdio.h>
 #include <QtWidgets>
 #include <QtSql>
-#include <QSqlTableModel>
-#include <QTableView>
 
 #include <memory>
 #include <algorithm>
@@ -22,7 +20,6 @@ void TableEditor::initializeStudentsModel(QSqlTableModel *model){
     model->setHeaderData(1, Qt::Horizontal, QObject::tr("First Name"));
     model->setHeaderData(2, Qt::Horizontal, QObject::tr("Last Name"));
     model->setHeaderData(3, Qt::Horizontal, QObject::tr("Name"));
-    model->setHeaderData(4, Qt::Horizontal, QObject::tr("GPA"));
 }
 void TableEditor::initializeCoursesModel(QSqlTableModel *model){
     model->setTable("Courses");
@@ -31,6 +28,8 @@ void TableEditor::initializeCoursesModel(QSqlTableModel *model){
 
     model->setHeaderData(0, Qt::Horizontal, QObject::tr("ID"));
     model->setHeaderData(1, Qt::Horizontal, QObject::tr("Name"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("Teacher's First Name"));
+    model->setHeaderData(3, Qt::Horizontal, QObject::tr("Teacher's Last Name"));
 }
 void TableEditor::initializeEvaluationModel(QSqlRelationalTableModel *model){
     model->setTable("Evaluation");
@@ -83,6 +82,7 @@ TableEditor::TableEditor(const QString &tableName, QWidget *parent)
         bool relational = false;
         initializeCoursesModel(model);
         view = createClassicView(model);
+        view->hideColumn(0);
     } else if (tableName == "Evaluation"){
         relational = true;
         initializeEvaluationModel(model);
@@ -111,11 +111,11 @@ TableEditor::TableEditor(const QString &tableName, QWidget *parent)
     connect(submitButton, &QPushButton::clicked, this, &TableEditor::submit);
     connect(revertButton, &QPushButton::clicked,  this, &TableEditor::revert);
 
-    QHBoxLayout *mainLayout = new QHBoxLayout;
-    mainLayout->addWidget(relational ? evaluationView.get() : view);
+    QHBoxLayout *editorLayout = new QHBoxLayout;
+    editorLayout->addWidget(relational ? evaluationView.get() : view);
 
-    mainLayout->addWidget(buttonBox);
-    parent->setLayout(mainLayout);
+    editorLayout->addWidget(buttonBox);
+    parent->setLayout(editorLayout);
 
 }
 

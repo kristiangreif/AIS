@@ -7,12 +7,14 @@
 #include <QDialog>
 #include <QtSql>
 #include <QSqlTableModel>
+#include <QSqlRelationalTableModel>
 #include <QTableView>
 
 QT_BEGIN_NAMESPACE
 class QDialogButtonBox;
 class QPushButton;
 class QSqlTableModel;
+class QSqlRelationalTableModel;
 QT_END_NAMESPACE
 
 //! [0]
@@ -23,12 +25,15 @@ class TableEditor : public QWidget
 public:
     explicit TableEditor(const QString &tableName, QWidget *parent = nullptr);
 
+public slots:
+    void refresh();
+
 private slots:
     void submit();
     void addRow();
     void deleteRow();
     void revert();
-    void refresh();
+
 
 private:
     QPushButton *refreshButton;
