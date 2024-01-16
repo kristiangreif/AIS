@@ -65,17 +65,16 @@ Overview::Overview(const QString& query, QStringList header, QWidget *parent) : 
     filterHeaderLayout->addWidget(filter2ColumnSelect);
     filterHeader->setLayout(filterHeaderLayout);
 
-    refreshButton = new QPushButton(tr("&Refresh"));
-    connect(refreshButton, &QPushButton::clicked, this, &Overview::refresh);
+    // refreshButton = new QPushButton(tr("&Refresh"));
+    // connect(refreshButton, &QPushButton::clicked, this, &Overview::refresh);
 
     // statistics = new QWidget;
 
     overviewLayout->addWidget(filterHeader);
-    overviewLayout->addWidget(refreshButton);
+    // overviewLayout->addWidget(refreshButton);
     overviewLayout->addWidget(view);
 
     parent->setLayout(overviewLayout);
-
 }
 
 void Overview::filter1Slot(const QString& filterText){

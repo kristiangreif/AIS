@@ -32,6 +32,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         mysortfilterproxymodel.h mysortfilterproxymodel.cpp
         overview.h overview.cpp
+        sqlrelationalproxydelegate.h sqlrelationalproxydelegate.cpp
+        editorbase.h editorbase.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET AIS APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

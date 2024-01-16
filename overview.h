@@ -12,12 +12,14 @@ class Overview : public QWidget
 public:
     explicit Overview(const QString& query, QStringList header, QWidget *parent = nullptr);
 
+public slots:
+    void refresh();
+
 private slots:
     void filter1Slot(const QString& filterText);
     void filter2Slot(const QString& filterText);
     void filter1SelectSlot(int index);
     void filter2SelectSlot(int index);
-    void refresh();
 
 signals:
     void filter1Signal(const QString& filterText, int columnIndex);
@@ -38,7 +40,6 @@ private:
     QLineEdit *filter2Input;
     QComboBox *filter1ColumnSelect;
     QComboBox *filter2ColumnSelect;
-    QPushButton *refreshButton;
     QWidget *statistics;
 
 };

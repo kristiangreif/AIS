@@ -39,9 +39,27 @@ int main(int argc, char *argv[])
 
     std::cout<<(ok ? "Connection to database successful" : "Cannot connect to database")<<std::endl;
 
-    QHBoxLayout *mainLayout = new QHBoxLayout();
+    QVBoxLayout *mainLayout = new QVBoxLayout();
 
-    QTabWidget *tabWidget = new QTabWidget();
+    QWidget *modeSwitch = new QWidget;
+    QHBoxLayout *modeSwitchLayout = new QHBoxLayout();
+
+    w.editModeButton = new QPushButton(QObject::tr("&Edit Mode"));
+    w.overviewModeButton = new QPushButton(QObject::tr("&Overview"));
+
+
+    QWidget::connect(w.editModeButton, &QPushButton::clicked, &w, &Window::hideOverviewTabs);
+    QWidget::connect(w.overviewModeButton, &QPushButton::clicked, &w, &Window::hideEditorTabs);
+    // QDialogButtonBox *buttonBox = new QDialogButtonBox(Qt::Horizontal);
+    // buttonBox->addButton(editModeButton, QDialogButtonBox::ActionRole);
+    // buttonBox->addButton(overviewModeButton, QDialogButtonBox::ActionRole);
+
+    modeSwitchLayout->setContentsMargins(0,10,0,10);
+    modeSwitchLayout->addWidget(w.editModeButton);
+    modeSwitchLayout->addWidget(w.overviewModeButton);
+    modeSwitch->setLayout(modeSwitchLayout);
+
+    w.tabWidget = new QTabWidget();
     QWidget *studentsPage = new QWidget();
     QWidget *coursesPage = new QWidget();
     QWidget *evaluationPage = new QWidget();
@@ -49,29 +67,33 @@ int main(int argc, char *argv[])
     QWidget *coursesOverviewPage = new QWidget();
     QWidget *gradesOverviewPage = new QWidget();
 
-    TableEditor studentsEditor("Students", studentsPage);
-    TableEditor coursesEditor("Courses", coursesPage);
+    w.studentsEditor = new TableEditor("Students", studentsPage);
+    w.coursesEditor = new TableEditor("Courses", coursesPage);
     w.evaluationEditor = new TableEditor("Evaluation", evaluationPage);
-    QObject::connect(tabWidget, &QTabWidget::currentChanged, &w, &Window::refreshCurrentTab);
+    QObject::connect(w.tabWidget, &QTabWidget::currentChanged, &w, &Window::refreshCurrentTab);
 
-    QStringList studentsOverviewHeader = {"Student ID", "QOFirst Name", "Last Name", "Course", "Grade"};
-    Overview studentsOverview("SELECT Students.ID, Students.first_name, Students.last_name, Courses.name, Evaluation.grade FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID", studentsOverviewHeader, studentOverviewPage);
+    QStringList studentsOverviewHeader = {"Student ID", "First Name", "Last Name", "Course", "Grade"};
+    w.studentsOverview = new Overview("SELECT Students.ID, Students.first_name, Students.last_name, Courses.name, Evaluation.grade FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID", studentsOverviewHeader, studentOverviewPage);
 
     QStringList coursesOverviewHeader = {"Course", "Teacher's First Name", "Teacher's Last Name","Student's First Name", "Student's Last Name", "Grade"};
-    Overview coursesOverview("SELECT Courses.name, Courses.teacher_first_name, Courses.teacher_last_name, Students.first_name, Students.last_name, Evaluation.grade FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID", coursesOverviewHeader, coursesOverviewPage);
+    w.coursesOverview = new Overview("SELECT Courses.name, Courses.teacher_first_name, Courses.teacher_last_name, Students.first_name, Students.last_name, Evaluation.grade FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID", coursesOverviewHeader, coursesOverviewPage);
 
     QStringList gradesOverviewHeader = {"Grade", "Student's First Name", "Student's Last Name", "Course"};
-    Overview gradesOverview("SELECT Evaluation.grade, Students.first_name, Students.last_name, Courses.name FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID", gradesOverviewHeader, gradesOverviewPage);
+    w.gradesOverview = new Overview("SELECT Evaluation.grade, Students.first_name, Students.last_name, Courses.name FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID", gradesOverviewHeader, gradesOverviewPage);
 
-    tabWidget->addTab(studentsPage, "Students");
-    tabWidget->addTab(coursesPage, "Courses");
-    tabWidget->addTab(evaluationPage, "Evaluation");
-    tabWidget->addTab(studentOverviewPage, "Student Overview");
-    tabWidget->addTab(coursesOverviewPage, "Course Overview");
-    tabWidget->addTab(gradesOverviewPage, "Evaluation Overview");
+    w.tabWidget->addTab(studentsPage, "Students");
+    w.tabWidget->addTab(coursesPage, "Courses");
+    w.tabWidget->addTab(evaluationPage, "Evaluation");
+    w.tabWidget->addTab(studentOverviewPage, "Student Overview");
+    w.tabWidget->addTab(coursesOverviewPage, "Course Overview");
+    w.tabWidget->addTab(gradesOverviewPage, "Evaluation Overview");
 
-    mainLayout->addWidget(tabWidget);
+    mainLayout->addWidget(modeSwitch);
+    mainLayout->addWidget(w.tabWidget);
     w.setLayout(mainLayout);
+
+    w.hideEditorTabs();
+    w.overviewModeButton->setDefault(true);
 
     w.setWindowTitle("AIS");
     w.show();

@@ -6,16 +6,16 @@
 
 #include <QDialog>
 #include <QtSql>
-#include <QSqlTableModel>
-#include <QSqlRelationalTableModel>
-#include <QTableView>
+#include <QtWidgets>
 
-QT_BEGIN_NAMESPACE
-class QDialogButtonBox;
-class QPushButton;
-class QSqlTableModel;
-class QSqlRelationalTableModel;
-QT_END_NAMESPACE
+#include "mysortfilterproxymodel.h"
+
+// QT_BEGIN_NAMESPACE
+// class QDialogButtonBox;
+// class QPushButton;
+// class QSqlTableModel;
+// class QSqlRelationalTableModel;
+// QT_END_NAMESPACE
 
 //! [0]
 class TableEditor : public QWidget
@@ -34,9 +34,24 @@ private slots:
     void deleteRow();
     void revert();
 
+    void filterSlot(const QString& filterText);
+    void filterSelectSlot(int index);
+
+signals:
+    void filterSignal(const QString& filterText, int columnIndex);
 
 private:
-    QPushButton *refreshButton;
+    QWidget *filterHeader;
+    QHBoxLayout *filterHeaderLayout;
+    QLabel *filterLabel;
+    QLabel *filterColumnLabel;
+    QLineEdit *filterInput;
+    QComboBox *filterColumnSelect;
+
+    QWidget *editor;
+    QHBoxLayout *editorLayout;
+
+    // QPushButton *refreshButton;
     QPushButton *submitButton;
     QPushButton *revertButton;
     QPushButton *addRowButton;
@@ -44,6 +59,7 @@ private:
     QDialogButtonBox *buttonBox;
     // QSqlTableModel *model;
     QSqlRelationalTableModel *model;
+    MySortFilterProxyModel *proxyModel;
     // QSqlRelationalTableModel *relationalModel;
     QTableView *view;
     std::unique_ptr<QTableView> evaluationView;

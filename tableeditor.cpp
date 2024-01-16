@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "tableeditor.h"
+#include "sqlrelationalproxydelegate.h"
 
 
 void TableEditor::initializeStudentsModel(QSqlTableModel *model){
@@ -47,7 +48,12 @@ void TableEditor::initializeEvaluationModel(QSqlRelationalTableModel *model){
 }
 QTableView *TableEditor::createClassicView(QSqlTableModel *model){
     QTableView *view{new QTableView};
-    view->setModel(model);
+
+    proxyModel = new MySortFilterProxyModel(model);
+    proxyModel->setSourceModel(model);
+
+    view->setSortingEnabled(true);
+    view->setModel(proxyModel);
     view->resizeColumnsToContents();
     // view->setWindowTitle(title);
 
@@ -55,8 +61,15 @@ QTableView *TableEditor::createClassicView(QSqlTableModel *model){
 }
 std::unique_ptr<QTableView> TableEditor::createRelationalView(QSqlTableModel *model){
     std::unique_ptr<QTableView> view{new QTableView};
-    view->setModel(model);
-    view->setItemDelegate(new QSqlRelationalDelegate(view.get()));
+
+    proxyModel = new MySortFilterProxyModel(model);
+    proxyModel->setSourceModel(model);
+
+    view->setSortingEnabled(true);
+    view->setModel(proxyModel);
+    view->setItemDelegateForColumn(1, new SqlRelationalProxyDelegate(view.get()));
+    view->setItemDelegateForColumn(2, new SqlRelationalProxyDelegate(view.get()));
+    // view->setItemDelegate(new QSqlRelationalDelegate(view.get()));
     view->resizeColumnsToContents();
     // view->setWindowTitle(title);
 
@@ -90,7 +103,7 @@ TableEditor::TableEditor(const QString &tableName, QWidget *parent)
         evaluationView->hideColumn(0);
     }
 
-    refreshButton = new QPushButton(tr("&Refresh"));
+    // refreshButton = new QPushButton(tr("&Refresh"));
     addRowButton = new QPushButton(tr("&Add"));
     deleteRowButton = new QPushButton(tr("&Delete"));
     submitButton = new QPushButton(tr("Submit"));
@@ -98,24 +111,62 @@ TableEditor::TableEditor(const QString &tableName, QWidget *parent)
     revertButton = new QPushButton(tr("&Revert"));
 
     buttonBox = new QDialogButtonBox(Qt::Vertical);
-    buttonBox->addButton(refreshButton, QDialogButtonBox::ActionRole);
+    // buttonBox->addButton(refreshButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(addRowButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(deleteRowButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(submitButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(revertButton, QDialogButtonBox::ActionRole);
 
 
-    connect(refreshButton, &QPushButton::clicked, this, &TableEditor::refresh);
+    // connect(refreshButton, &QPushButton::clicked, this, &TableEditor::refresh);
     connect(addRowButton, &QPushButton::clicked, this, &TableEditor::addRow);
     connect(deleteRowButton, &QPushButton::clicked, this, &TableEditor::deleteRow);
     connect(submitButton, &QPushButton::clicked, this, &TableEditor::submit);
     connect(revertButton, &QPushButton::clicked,  this, &TableEditor::revert);
 
-    QHBoxLayout *editorLayout = new QHBoxLayout;
-    editorLayout->addWidget(relational ? evaluationView.get() : view);
+    //filter header
+    filterHeader = new QWidget();
+    filterHeaderLayout = new QHBoxLayout();
 
+    filterInput = new QLineEdit;
+    filterColumnSelect = new QComboBox;
+
+    filterLabel = new QLabel("Filter:");
+    filterLabel->setBuddy(filterInput);
+    filterColumnLabel = new QLabel("Category:");
+    filterColumnLabel->setBuddy(filterColumnSelect);
+
+    connect(filterColumnSelect, &QComboBox::currentIndexChanged, this, &TableEditor::filterSelectSlot);
+    connect(filterInput, &QLineEdit::textChanged, this, &TableEditor::filterSlot);
+    connect(this, &TableEditor::filterSignal, proxyModel, &MySortFilterProxyModel::setFilter1);
+
+    QStringList columnNames;
+    for (int i=0; i<model->columnCount();i++){
+        columnNames << model->headerData(i,Qt::Horizontal).value<QString>();
+    }
+
+    filterColumnSelect->addItems(columnNames);
+
+    filterHeaderLayout->setContentsMargins(0,0,0,0);
+    filterHeaderLayout->addWidget(filterLabel);
+    filterHeaderLayout->addWidget(filterInput);
+    filterHeaderLayout->addWidget(filterColumnLabel);
+    filterHeaderLayout->addWidget(filterColumnSelect);
+    filterHeader->setLayout(filterHeaderLayout);
+
+    editor = new QWidget;
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    editorLayout = new QHBoxLayout;
+
+    editorLayout->setContentsMargins(0,0,0,0);
+    editorLayout->addWidget(relational ? evaluationView.get() : view);
     editorLayout->addWidget(buttonBox);
-    parent->setLayout(editorLayout);
+    editor->setLayout(editorLayout);
+
+    mainLayout->addWidget(filterHeader);
+    mainLayout->addWidget(editor);
+
+    parent->setLayout(mainLayout);
 
 }
 
@@ -191,7 +242,11 @@ void TableEditor::revert()
 void TableEditor::refresh()
 {
     if(relational) {
-        initializeEvaluationModel(model);
+        // model->setTable("Evaluation");
+        model->setRelation(1, QSqlRelation("Students", "id", "name"));
+        model->setRelation(2, QSqlRelation("Courses", "id", "name"));
+        model->select();
+        // initializeEvaluationModel(model);
         evaluationView->resizeColumnsToContents();
         evaluationView->hideColumn(0);
 
@@ -200,7 +255,14 @@ void TableEditor::refresh()
 
 
     model->select();
+    view->resizeColumnsToContents();
 }
 
 
+void TableEditor::filterSlot(const QString& filterText){
+    emit filterSignal(filterText, filterColumnSelect->currentIndex());
+}
 
+void TableEditor::filterSelectSlot(int index){
+    emit filterSignal(filterInput->text(), index);
+}
