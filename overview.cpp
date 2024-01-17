@@ -1,4 +1,5 @@
 #include <QtWidgets>
+#include <QDebug>
 #include "overview.h"
 
 Overview::Overview(const QString& query, QStringList header, QWidget *parent) : QWidget(parent){
@@ -68,11 +69,20 @@ Overview::Overview(const QString& query, QStringList header, QWidget *parent) : 
     // refreshButton = new QPushButton(tr("&Refresh"));
     // connect(refreshButton, &QPushButton::clicked, this, &Overview::refresh);
 
-    // statistics = new QWidget;
+    statistics = new QWidget;
+    statisticsLayout = new QHBoxLayout;
+    numberOfResults = new QLabel;
+    numberOfResults->setText(QString("Number of results: %1").arg(proxyModel->rowCount()));
+
+    connect(proxyModel, &MySortFilterProxyModel::rowAccepted, this, &Overview::filterFinished);
+
+    statisticsLayout->addWidget(numberOfResults);
+    statistics->setLayout(statisticsLayout);
+
 
     overviewLayout->addWidget(filterHeader);
-    // overviewLayout->addWidget(refreshButton);
     overviewLayout->addWidget(view);
+    overviewLayout->addWidget(statistics);
 
     parent->setLayout(overviewLayout);
 }
@@ -95,4 +105,23 @@ void Overview::filter2SelectSlot(int index){
 
 void Overview::refresh(){
     model->setQuery(modelQuery);
+}
+
+void Overview::filterFinished(const QString& regExp)
+{
+    int result = 0;
+
+    if(model->headerData(0, Qt::Horizontal) != "Student ID" || regExp == ""){
+        result = proxyModel->rowCount();
+    } else{
+        QStringList keyColumnValues = {};
+        for (int i = 0; i < proxyModel->rowCount(); i++) {
+            keyColumnValues << proxyModel->data(proxyModel->index(i, 0)).toString();
+        }
+        keyColumnValues.removeDuplicates();
+        result = keyColumnValues.size();
+    }
+
+    numberOfResults->setText(QString("Number of results: %1").arg(result));
+
 }

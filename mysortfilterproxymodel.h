@@ -65,6 +65,9 @@ public slots:
     void setFilter1(const QString& regExp, int columnIndex);
     void setFilter2(const QString& regExp, int columnIndex);
 
+signals:
+    void rowAccepted(const QString& regExp);
+
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;

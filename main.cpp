@@ -9,7 +9,9 @@
 #include <QtWidgets>
 #include <QtSql>
 
-#include "tableeditor.h"
+// #include "tableeditor.h"
+#include "relationaleditor.h"
+#include "classiceditor.h"
 #include "overview.h"
 
 
@@ -67,10 +69,14 @@ int main(int argc, char *argv[])
     QWidget *coursesOverviewPage = new QWidget();
     QWidget *gradesOverviewPage = new QWidget();
 
-    w.studentsEditor = new TableEditor("Students", studentsPage);
-    w.coursesEditor = new TableEditor("Courses", coursesPage);
-    w.evaluationEditor = new TableEditor("Evaluation", evaluationPage);
-    QObject::connect(w.tabWidget, &QTabWidget::currentChanged, &w, &Window::refreshCurrentTab);
+    QStringList studentsEditorHeader = {"Student ID", "First Name", "Last Name", "Name"};
+    w.studentsEditor = new ClassicEditor("Students", studentsEditorHeader, QList<int> {3}, studentsPage);
+
+    QStringList coursesEditorHeader = {"ID", "Name", "Teacher's First Name", "Teacher's Last Name"};
+    w.coursesEditor = new ClassicEditor("Courses", coursesEditorHeader, QList<int> {0}, coursesPage);
+    // w.coursesEditor = new TableEditor("Courses", coursesPage);
+    QStringList evaluationEditorHeader = {"ID", "Student's Name", "Course", "Grade"};
+    w.evaluationEditor = new RelationalEditor("Evaluation", evaluationEditorHeader, QList<int> {0}, evaluationPage);
 
     QStringList studentsOverviewHeader = {"Student ID", "First Name", "Last Name", "Course", "Grade"};
     w.studentsOverview = new Overview("SELECT Students.ID, Students.first_name, Students.last_name, Courses.name, Evaluation.grade FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID", studentsOverviewHeader, studentOverviewPage);
@@ -80,6 +86,8 @@ int main(int argc, char *argv[])
 
     QStringList gradesOverviewHeader = {"Grade", "Student's First Name", "Student's Last Name", "Course"};
     w.gradesOverview = new Overview("SELECT Evaluation.grade, Students.first_name, Students.last_name, Courses.name FROM Evaluation INNER JOIN Students ON Evaluation.student_id = Students.ID INNER JOIN Courses ON Evaluation.course_id = Courses.ID", gradesOverviewHeader, gradesOverviewPage);
+
+    QObject::connect(w.tabWidget, &QTabWidget::currentChanged, &w, &Window::refreshCurrentTab);
 
     w.tabWidget->addTab(studentsPage, "Students");
     w.tabWidget->addTab(coursesPage, "Courses");

@@ -36,6 +36,7 @@ private slots:
 
     void filterSlot(const QString& filterText);
     void filterSelectSlot(int index);
+    void filterFinished(const QString& regExp);
 
 signals:
     void filterSignal(const QString& filterText, int columnIndex);
@@ -50,6 +51,10 @@ private:
 
     QWidget *editor;
     QHBoxLayout *editorLayout;
+
+    QWidget *statistics;
+    QHBoxLayout *statisticsLayout;
+    QLabel *numberOfResults;
 
     // QPushButton *refreshButton;
     QPushButton *submitButton;

@@ -66,12 +66,15 @@ void MySortFilterProxyModel::setFilter1(const QString& regExp, int columnIndex){
     filter1ColumnIndex = columnIndex;
     filter1RegExp.setPattern(regExp);
     invalidateFilter();
+    emit rowAccepted(regExp);
 }
 void MySortFilterProxyModel::setFilter2(const QString& regExp, int columnIndex){
     filter2ColumnIndex = columnIndex;
     filter2RegExp.setPattern(regExp);
     invalidateFilter();
+    emit rowAccepted(regExp);
 }
+
 
 bool MySortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
@@ -83,3 +86,5 @@ bool MySortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &
 
     return (filter1.contains(filter1RegExp) && filter2.contains(filter2RegExp));
 }
+
+

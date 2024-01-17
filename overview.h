@@ -20,6 +20,7 @@ private slots:
     void filter2Slot(const QString& filterText);
     void filter1SelectSlot(int index);
     void filter2SelectSlot(int index);
+    void filterFinished(const QString& regExp);
 
 signals:
     void filter1Signal(const QString& filterText, int columnIndex);
@@ -40,7 +41,10 @@ private:
     QLineEdit *filter2Input;
     QComboBox *filter1ColumnSelect;
     QComboBox *filter2ColumnSelect;
+
     QWidget *statistics;
+    QHBoxLayout *statisticsLayout;
+    QLabel *numberOfResults;
 
 };
 

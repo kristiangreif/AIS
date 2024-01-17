@@ -51,6 +51,7 @@ QTableView *TableEditor::createClassicView(QSqlTableModel *model){
 
     proxyModel = new MySortFilterProxyModel(model);
     proxyModel->setSourceModel(model);
+    proxyModel->setFilterRole(Qt::EditRole);
 
     view->setSortingEnabled(true);
     view->setModel(proxyModel);
@@ -64,6 +65,7 @@ std::unique_ptr<QTableView> TableEditor::createRelationalView(QSqlTableModel *mo
 
     proxyModel = new MySortFilterProxyModel(model);
     proxyModel->setSourceModel(model);
+    proxyModel->setFilterRole(Qt::EditRole);
 
     view->setSortingEnabled(true);
     view->setModel(proxyModel);
@@ -158,6 +160,17 @@ TableEditor::TableEditor(const QString &tableName, QWidget *parent)
     QVBoxLayout *mainLayout = new QVBoxLayout;
     editorLayout = new QHBoxLayout;
 
+    statistics = new QWidget;
+    statisticsLayout = new QHBoxLayout;
+    numberOfResults = new QLabel;
+    numberOfResults->setText(QString("Number of results: %1").arg(proxyModel->rowCount()));
+
+    connect(proxyModel, &MySortFilterProxyModel::rowAccepted, this, &TableEditor::filterFinished);
+
+    statisticsLayout->setContentsMargins(0,0,0,0);
+    statisticsLayout->addWidget(numberOfResults);
+    statistics->setLayout(statisticsLayout);
+
     editorLayout->setContentsMargins(0,0,0,0);
     editorLayout->addWidget(relational ? evaluationView.get() : view);
     editorLayout->addWidget(buttonBox);
@@ -165,6 +178,7 @@ TableEditor::TableEditor(const QString &tableName, QWidget *parent)
 
     mainLayout->addWidget(filterHeader);
     mainLayout->addWidget(editor);
+    mainLayout->addWidget(statistics);
 
     parent->setLayout(mainLayout);
 
@@ -265,4 +279,26 @@ void TableEditor::filterSlot(const QString& filterText){
 
 void TableEditor::filterSelectSlot(int index){
     emit filterSignal(filterInput->text(), index);
+}
+
+
+void TableEditor::filterFinished(const QString& regExp)
+{
+    int result = 0;
+
+    // if(model->headerData(0, Qt::Horizontal) != "Student ID" || regExp == ""){
+    //     result = proxyModel->rowCount();
+    // } else{
+    //     QStringList keyColumnValues = {};
+    //     for (int i = 0; i < proxyModel->rowCount(); i++) {
+    //         keyColumnValues << proxyModel->data(proxyModel->index(i, 0)).toString();
+    //     }
+    //     keyColumnValues.removeDuplicates();
+    //     result = keyColumnValues.size();
+    // }
+
+    result = proxyModel->rowCount();
+
+    numberOfResults->setText(QString("Number of results: %1").arg(result));
+
 }

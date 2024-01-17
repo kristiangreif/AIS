@@ -2,7 +2,9 @@
 #define WINDOW_H
 
 #include <QWidget>
-#include "tableeditor.h"
+// #include "tableeditor.h"
+#include "classiceditor.h"
+#include "relationaleditor.h"
 #include "overview.h"
 
 QT_BEGIN_NAMESPACE
@@ -24,9 +26,9 @@ public:
     QPushButton *editModeButton;
     QPushButton *overviewModeButton;
 
-    TableEditor *evaluationEditor;
-    TableEditor *studentsEditor;
-    TableEditor *coursesEditor;
+    RelationalEditor *evaluationEditor;
+    ClassicEditor *studentsEditor;
+    ClassicEditor *coursesEditor;
     Overview *studentsOverview;
     Overview *coursesOverview;
     Overview *gradesOverview;
