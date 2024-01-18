@@ -2,6 +2,7 @@
 
 #include <QtWidgets>
 #include <QtSql>
+#include <QDebug>
 
 #include <memory>
 #include <algorithm>
@@ -10,10 +11,12 @@
 
 RelationalEditor::RelationalEditor(const QString &tableName, QStringList header, QList<int> hiddenColumns, QWidget *parent) : QWidget(parent)
 {
+    // Create model from a database table, with specified column names
     model = new QSqlRelationalTableModel(this);
 
     model->setTable(tableName);
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    // Set table relations - not general yet!
     model->setRelation(1, QSqlRelation("Students", "id", "name"));
     model->setRelation(2, QSqlRelation("Courses", "id", "name"));
 
@@ -23,23 +26,27 @@ RelationalEditor::RelationalEditor(const QString &tableName, QStringList header,
 
     model->select();
 
+    // Create proxy model to add filtering and sorting capabilities
     proxyModel = new MySortFilterProxyModel(model);
     proxyModel->setSourceModel(model);
     proxyModel->setFilterRole(Qt::EditRole);
 
-    // QTableView *view{new QTableView};
+    // Create model view based on the proxy model
     view = std::unique_ptr<QTableView> {new QTableView};
 
     view->setSortingEnabled(true);
     view->setModel(proxyModel);
+    // Set custom item delegate for a proxied relational table
     view->setItemDelegateForColumn(1, new SqlRelationalProxyDelegate(view.get()));
     view->setItemDelegateForColumn(2, new SqlRelationalProxyDelegate(view.get()));
     view->resizeColumnsToContents();
 
+    // Hide specified columns
     for (int i : hiddenColumns) {
         view->hideColumn(i);
     }
 
+    // Editor buttons
     addRowButton = new QPushButton(tr("&Add"));
     deleteRowButton = new QPushButton(tr("&Delete"));
     submitButton = new QPushButton(tr("Submit"));
@@ -47,20 +54,18 @@ RelationalEditor::RelationalEditor(const QString &tableName, QStringList header,
     revertButton = new QPushButton(tr("&Revert"));
 
     buttonBox = new QDialogButtonBox(Qt::Vertical);
-    // buttonBox->addButton(refreshButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(addRowButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(deleteRowButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(submitButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(revertButton, QDialogButtonBox::ActionRole);
 
 
-    // connect(refreshButton, &QPushButton::clicked, this, &TableEditor::refresh);
     connect(addRowButton, &QPushButton::clicked, this, &RelationalEditor::addRow);
     connect(deleteRowButton, &QPushButton::clicked, this, &RelationalEditor::deleteRow);
     connect(submitButton, &QPushButton::clicked, this, &RelationalEditor::submit);
     connect(revertButton, &QPushButton::clicked,  this, &RelationalEditor::revert);
 
-    //filter header
+    // Filter header
     filterHeader = new QWidget();
     filterHeaderLayout = new QHBoxLayout();
 
@@ -76,11 +81,11 @@ RelationalEditor::RelationalEditor(const QString &tableName, QStringList header,
     connect(filterInput, &QLineEdit::textChanged, this, &RelationalEditor::filterSlot);
     connect(this, &RelationalEditor::filterSignal, proxyModel, &MySortFilterProxyModel::setFilter1);
 
+    // Add column names to filter combobox - to later choose filter category
     QStringList columnNames;
     for (int i=0; i<model->columnCount();i++){
         columnNames << model->headerData(i,Qt::Horizontal).value<QString>();
     }
-
     filterColumnSelect->addItems(columnNames);
 
     filterHeaderLayout->setContentsMargins(0,0,0,0);
@@ -90,10 +95,12 @@ RelationalEditor::RelationalEditor(const QString &tableName, QStringList header,
     filterHeaderLayout->addWidget(filterColumnSelect);
     filterHeader->setLayout(filterHeaderLayout);
 
+    // Editor Widget
     editor = new QWidget;
     QVBoxLayout *mainLayout = new QVBoxLayout;
     editorLayout = new QHBoxLayout;
 
+    // Statistics section - provide number of filtered results
     statistics = new QWidget;
     statisticsLayout = new QHBoxLayout;
     numberOfResults = new QLabel;
@@ -105,18 +112,22 @@ RelationalEditor::RelationalEditor(const QString &tableName, QStringList header,
     statisticsLayout->addWidget(numberOfResults);
     statistics->setLayout(statisticsLayout);
 
+    // Add table view and buttons to the editor widget
     editorLayout->setContentsMargins(0,0,0,0);
     editorLayout->addWidget(view.get());
     editorLayout->addWidget(buttonBox);
     editor->setLayout(editorLayout);
 
+    // Add Filter header, editor and statistics to the main layout
     mainLayout->addWidget(filterHeader);
     mainLayout->addWidget(editor);
     mainLayout->addWidget(statistics);
 
+    // Set the main layout of the parent
     parent->setLayout(mainLayout);
 }
 
+// Slots
 void RelationalEditor::submit()
 {
     int prev = -1;
@@ -135,6 +146,7 @@ void RelationalEditor::submit()
     model->database().transaction();
     if (model->submitAll()) {
         model->database().commit();
+        filterFinished("");
     } else {
         model->database().rollback();
         QMessageBox::warning(this, tr("Cached Table"),
@@ -175,7 +187,7 @@ void RelationalEditor::revert()
     for( int i = rows.count() - 1; i >= 0; i -= 1 ) {
         int current = rows[i];
         if( current != prev ) {
-            if(view->isRowHidden(current)){
+            if(!view->isRowHidden(current)){
                 prev = current;
                 continue;
             }
@@ -185,17 +197,6 @@ void RelationalEditor::revert()
     }
 
 }
-
-void RelationalEditor::refresh()
-{
-    // model->setTable("Evaluation");
-    model->setRelation(1, QSqlRelation("Students", "id", "name"));
-    model->setRelation(2, QSqlRelation("Courses", "id", "name"));
-    model->select();
-    view->resizeColumnsToContents();
-    view->hideColumn(0);
-}
-
 
 void RelationalEditor::filterSlot(const QString& filterText){
     emit filterSignal(filterText, filterColumnSelect->currentIndex());
@@ -214,3 +215,26 @@ void RelationalEditor::filterFinished(const QString& regExp)
     numberOfResults->setText(QString("Number of results: %1").arg(result));
 
 }
+
+// not general yet!
+void RelationalEditor::refresh()
+{
+    model->setTable("Evaluation");
+
+    model->setRelation(1, QSqlRelation("Students", "id", "name"));
+    model->setRelation(2, QSqlRelation("Courses", "id", "name"));
+
+    model->select();
+
+    model->setHeaderData(0, Qt::Horizontal, QObject::tr("ID"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("Student's Name"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("Course"));
+    model->setHeaderData(3, Qt::Horizontal, QObject::tr("Grade"));
+    // view->setItemDelegateForColumn(1, new SqlRelationalProxyDelegate(view.get()));
+    // view->setItemDelegateForColumn(2, new SqlRelationalProxyDelegate(view.get()));
+    view->resizeColumnsToContents();
+    view->hideColumn(0);
+
+    filterFinished("");
+}
+

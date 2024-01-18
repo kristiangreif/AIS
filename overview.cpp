@@ -3,6 +3,7 @@
 #include "overview.h"
 
 Overview::Overview(const QString& query, QStringList header, QWidget *parent) : QWidget(parent){
+    // Create model from a specified query, with specified column names
     modelQuery = query;
 
     model = new QSqlQueryModel;
@@ -15,16 +16,20 @@ Overview::Overview(const QString& query, QStringList header, QWidget *parent) : 
         model->setHeaderData(header.indexOf(i), Qt::Horizontal, QObject::tr(i.toLocal8Bit().data()));
     }
 
+    // Create proxy model to add filtering and sorting capabilities
     proxyModel = new MySortFilterProxyModel(model);
     proxyModel->setSourceModel(model);
 
+    // Create model view based on the proxy model
     view = new QTableView;
     view->setSortingEnabled(true);
     view->setModel(proxyModel);
     view->resizeColumnsToContents();
 
+    // Main overview tab layout
     QVBoxLayout *overviewLayout = new QVBoxLayout();
 
+    // Filter header
     filterHeader = new QWidget();
     filterHeaderLayout = new QHBoxLayout();
 
@@ -66,9 +71,7 @@ Overview::Overview(const QString& query, QStringList header, QWidget *parent) : 
     filterHeaderLayout->addWidget(filter2ColumnSelect);
     filterHeader->setLayout(filterHeaderLayout);
 
-    // refreshButton = new QPushButton(tr("&Refresh"));
-    // connect(refreshButton, &QPushButton::clicked, this, &Overview::refresh);
-
+    // Statistics section - provide number of filtered results
     statistics = new QWidget;
     statisticsLayout = new QHBoxLayout;
     numberOfResults = new QLabel;
@@ -76,17 +79,22 @@ Overview::Overview(const QString& query, QStringList header, QWidget *parent) : 
 
     connect(proxyModel, &MySortFilterProxyModel::rowAccepted, this, &Overview::filterFinished);
 
+    statisticsLayout->setContentsMargins(0,0,0,0);
     statisticsLayout->addWidget(numberOfResults);
     statistics->setLayout(statisticsLayout);
 
 
+    // Add Filter header, table view and statistics to the main layout
     overviewLayout->addWidget(filterHeader);
     overviewLayout->addWidget(view);
     overviewLayout->addWidget(statistics);
 
+    // Set the main layout of the parent
     parent->setLayout(overviewLayout);
 }
 
+
+// Slots
 void Overview::filter1Slot(const QString& filterText){
     emit filter1Signal(filterText, filter1ColumnSelect->currentIndex());
 }
@@ -103,10 +111,6 @@ void Overview::filter2SelectSlot(int index){
     emit filter2Signal(filter2Input->text(), index);
 }
 
-void Overview::refresh(){
-    model->setQuery(modelQuery);
-}
-
 void Overview::filterFinished(const QString& regExp)
 {
     int result = 0;
@@ -114,6 +118,7 @@ void Overview::filterFinished(const QString& regExp)
     if(model->headerData(0, Qt::Horizontal) != "Student ID" || regExp == ""){
         result = proxyModel->rowCount();
     } else{
+        // If filtering students overview, count only unique results - could be implemented in other views as well
         QStringList keyColumnValues = {};
         for (int i = 0; i < proxyModel->rowCount(); i++) {
             keyColumnValues << proxyModel->data(proxyModel->index(i, 0)).toString();
@@ -124,4 +129,10 @@ void Overview::filterFinished(const QString& regExp)
 
     numberOfResults->setText(QString("Number of results: %1").arg(result));
 
+}
+
+void Overview::refresh(){
+    model->setQuery(modelQuery);
+
+    filterFinished("");
 }

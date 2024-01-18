@@ -21,11 +21,13 @@ public:
     Window(QWidget *parent = nullptr);
     ~Window();
 
+    // UI elements
     QTabWidget *tabWidget;
 
     QPushButton *editModeButton;
     QPushButton *overviewModeButton;
 
+    // Editors and overviews
     RelationalEditor *evaluationEditor;
     ClassicEditor *studentsEditor;
     ClassicEditor *coursesEditor;
@@ -34,6 +36,7 @@ public:
     Overview *gradesOverview;
 
 public slots:
+    // Slots for refreshing and hiding corresponding tables
     void refreshCurrentTab(int index);
     void hideOverviewTabs();
     void hideEditorTabs();

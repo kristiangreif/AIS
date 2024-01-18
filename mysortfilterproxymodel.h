@@ -53,7 +53,7 @@
 
 #include <QSortFilterProxyModel>
 
-//! [0]
+// Subclass for <QSortFilterProxyModel> - to allow custom filtering (Filter1 && Filter2)
 class MySortFilterProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
@@ -78,6 +78,5 @@ private:
     int filter1ColumnIndex = 0;
     int filter2ColumnIndex = 0;
 };
-//! [0]
 
 #endif // MYSORTFILTERPROXYMODEL_H

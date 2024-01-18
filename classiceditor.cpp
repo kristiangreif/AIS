@@ -1,10 +1,11 @@
-#include <memory>
 #include <algorithm>
 
 #include "classiceditor.h"
 
+//
 ClassicEditor::ClassicEditor(const QString &tableName, QStringList header, QList<int> hiddenColumns, QWidget *parent) : QWidget(parent)
 {
+    // Create model from a database table, with specified column names
     model = new QSqlTableModel(this);
 
     model->setTable(tableName);
@@ -15,21 +16,24 @@ ClassicEditor::ClassicEditor(const QString &tableName, QStringList header, QList
         model->setHeaderData(header.indexOf(i), Qt::Horizontal, QObject::tr(i.toLocal8Bit().data()));
     }
 
+    // Create proxy model to add filtering and sorting capabilities
     proxyModel = new MySortFilterProxyModel(model);
     proxyModel->setSourceModel(model);
     proxyModel->setFilterRole(Qt::EditRole);
 
-    // QTableView *view{new QTableView};
+    // Create model view based on the proxy model
     view = new QTableView;
 
     view->setSortingEnabled(true);
     view->setModel(proxyModel);
     view->resizeColumnsToContents();
 
+    // Hide specified columns
     for (int i : hiddenColumns) {
         view->hideColumn(i);
     }
 
+    // Editor buttons
     addRowButton = new QPushButton(tr("&Add"));
     deleteRowButton = new QPushButton(tr("&Delete"));
     submitButton = new QPushButton(tr("Submit"));
@@ -37,20 +41,18 @@ ClassicEditor::ClassicEditor(const QString &tableName, QStringList header, QList
     revertButton = new QPushButton(tr("&Revert"));
 
     buttonBox = new QDialogButtonBox(Qt::Vertical);
-    // buttonBox->addButton(refreshButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(addRowButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(deleteRowButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(submitButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(revertButton, QDialogButtonBox::ActionRole);
 
 
-    // connect(refreshButton, &QPushButton::clicked, this, &TableEditor::refresh);
     connect(addRowButton, &QPushButton::clicked, this, &ClassicEditor::addRow);
     connect(deleteRowButton, &QPushButton::clicked, this, &ClassicEditor::deleteRow);
     connect(submitButton, &QPushButton::clicked, this, &ClassicEditor::submit);
     connect(revertButton, &QPushButton::clicked,  this, &ClassicEditor::revert);
 
-    //filter header
+    // Filter header
     filterHeader = new QWidget();
     filterHeaderLayout = new QHBoxLayout();
 
@@ -66,11 +68,11 @@ ClassicEditor::ClassicEditor(const QString &tableName, QStringList header, QList
     connect(filterInput, &QLineEdit::textChanged, this, &ClassicEditor::filterSlot);
     connect(this, &ClassicEditor::filterSignal, proxyModel, &MySortFilterProxyModel::setFilter1);
 
+    // Add column names to filter combobox - to later choose filter category
     QStringList columnNames;
     for (int i=0; i<model->columnCount();i++){
         columnNames << model->headerData(i,Qt::Horizontal).value<QString>();
     }
-
     filterColumnSelect->addItems(columnNames);
 
     filterHeaderLayout->setContentsMargins(0,0,0,0);
@@ -80,10 +82,12 @@ ClassicEditor::ClassicEditor(const QString &tableName, QStringList header, QList
     filterHeaderLayout->addWidget(filterColumnSelect);
     filterHeader->setLayout(filterHeaderLayout);
 
+    // Editor Widget
     editor = new QWidget;
     QVBoxLayout *mainLayout = new QVBoxLayout;
     editorLayout = new QHBoxLayout;
 
+    // Statistics section - provide number of filtered results
     statistics = new QWidget;
     statisticsLayout = new QHBoxLayout;
     numberOfResults = new QLabel;
@@ -95,18 +99,23 @@ ClassicEditor::ClassicEditor(const QString &tableName, QStringList header, QList
     statisticsLayout->addWidget(numberOfResults);
     statistics->setLayout(statisticsLayout);
 
+    // Add table view and buttons to the editor widget
     editorLayout->setContentsMargins(0,0,0,0);
     editorLayout->addWidget(view);
     editorLayout->addWidget(buttonBox);
     editor->setLayout(editorLayout);
 
+    // Add Filter header, editor and statistics to the main layout
     mainLayout->addWidget(filterHeader);
     mainLayout->addWidget(editor);
     mainLayout->addWidget(statistics);
 
+    // Set the main layout of the parent
     parent->setLayout(mainLayout);
 }
 
+
+// Slots
 void ClassicEditor::submit()
 {
     int prev = -1;
@@ -125,6 +134,7 @@ void ClassicEditor::submit()
     model->database().transaction();
     if (model->submitAll()) {
         model->database().commit();
+        filterFinished("");
     } else {
         model->database().rollback();
         QMessageBox::warning(this, tr("Cached Table"),
@@ -165,7 +175,7 @@ void ClassicEditor::revert()
     for( int i = rows.count() - 1; i >= 0; i -= 1 ) {
         int current = rows[i];
         if( current != prev ) {
-            if(view->isRowHidden(current)){
+            if(!view->isRowHidden(current)){
                 prev = current;
                 continue;
             }
@@ -174,12 +184,6 @@ void ClassicEditor::revert()
         }
     }
 
-}
-
-void ClassicEditor::refresh()
-{
-    model->select();
-    view->resizeColumnsToContents();
 }
 
 
@@ -199,4 +203,11 @@ void ClassicEditor::filterFinished(const QString& regExp)
 
     numberOfResults->setText(QString("Number of results: %1").arg(result));
 
+}
+
+void ClassicEditor::refresh()
+{
+    model->select();
+    view->resizeColumnsToContents();
+    filterFinished("");
 }

@@ -50,7 +50,7 @@
 
 #include "mysortfilterproxymodel.h"
 
-#include <QtWidgets>
+// #include <QtWidgets>
 
 MySortFilterProxyModel::MySortFilterProxyModel(QObject *parent)
     : QSortFilterProxyModel(parent)
@@ -58,8 +58,6 @@ MySortFilterProxyModel::MySortFilterProxyModel(QObject *parent)
     //general parameters for the custom model
     filter1RegExp.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
     filter2RegExp.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
-    // yearRegExp.setPatternSyntax(QRegularExpression::RegExp);
-    // nameRegExp.setPatternSyntax(QRegularExpression::RegExp);
 }
 
 void MySortFilterProxyModel::setFilter1(const QString& regExp, int columnIndex){
@@ -76,6 +74,7 @@ void MySortFilterProxyModel::setFilter2(const QString& regExp, int columnIndex){
 }
 
 
+// Override the function to work in the mode "Filter1 & Filter2"
 bool MySortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
     QModelIndex filter1Index = sourceModel()->index(sourceRow, filter1ColumnIndex, sourceParent);

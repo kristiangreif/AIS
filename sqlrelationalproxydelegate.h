@@ -1,3 +1,5 @@
+// Custom item delegate for a proxied relational table
+
 #include <QSqlRelationalDelegate>
 
 class SqlRelationalProxyDelegate : public QSqlRelationalDelegate

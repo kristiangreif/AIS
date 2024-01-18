@@ -28,7 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(AIS
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        tableeditor.h tableeditor.cpp
+
 
         mysortfilterproxymodel.h mysortfilterproxymodel.cpp
         overview.h overview.cpp
