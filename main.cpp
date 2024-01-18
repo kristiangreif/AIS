@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
     db.setHostName("localhost");
     db.setDatabaseName("Faculty");
-    db.setUserName("kristian");
-    db.setPassword("?8?57/KG217");
+    db.setUserName("admin");
+    db.setPassword("admin");
 
     bool ok = db.open();
 

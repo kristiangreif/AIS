@@ -85,6 +85,16 @@ install(TARGETS AIS
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+# # Generate the deployment script for the target MyApp.
+# qt_generate_deploy_app_script(
+#     TARGET AIS
+#     OUTPUT_SCRIPT deploy_script
+#     NO_UNSUPPORTED_PLATFORM_ERROR
+# )
+
+# # Call the deployment script on "cmake --install".
+# install(SCRIPT ${deploy_script})
+
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(AIS)
 endif()
