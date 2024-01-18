@@ -37,7 +37,7 @@ Program bol vyvinutý na platforme `Fedora Linux 39`, pomocou frameworku `QT 6.6
    CREATE TRIGGER `setNameU` BEFORE UPDATE ON `Students`
    FOR EACH ROW SET NEW.name := CONCAT(NEW.first_name, CONCAT(" ", NEW.last_name))
    ```
-9. Stiahnite a extrahujte súbor `AIS.zip`
+9. Stiahnite a extrahujte súbor `AIS.tar.xz`
 10. Otvorte Terminal a napíšte: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<PATH_TO_EXTRACTED_FOLDER>/AIS/lib64/`
 11. Nakoniec navigujte do priečinka `<PATH_TO_EXTRACTED_FOLDER>/AIS/bin/`a spustite program pomocou `./AIS`
 
